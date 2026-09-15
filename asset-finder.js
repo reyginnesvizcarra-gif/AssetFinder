@@ -1,559 +1,412 @@
 (function () {
+    "use strict";
 
-  "use strict";
+    var initialized = false;
 
-
-  /*
-  =====================================================
-  INITIALIZE ASSET FINDER
-  =====================================================
-  */
-
-  function initializeAssetFinder() {
-
-    var searchInput =
-      document.getElementById("assetSearchInput");
-
-    var clearButton =
-      document.getElementById("assetClearButton");
-
-    var resultsCount =
-      document.getElementById("assetResultsCount");
-
-    var assetGrid =
-      document.getElementById("assetGrid");
-
-    var startMessage =
-      document.getElementById("assetSearchStart");
-
-    var noResults =
-      document.getElementById("assetNoResults");
-
-
-    /*
-    =====================================================
-    STOP IF REQUIRED ELEMENTS ARE MISSING
-    =====================================================
-    */
-
-    if (
-      !searchInput ||
-      !clearButton ||
-      !resultsCount ||
-      !assetGrid
-    ) {
-      return;
-    }
-
-
-    /*
-    =====================================================
-    GET ALL ASSET CARDS
-    =====================================================
-    */
-
-    var cards =
-      assetGrid.querySelectorAll(".asset-card");
-
-
-    /*
-    =====================================================
-    INITIAL STATE
-    =====================================================
-    */
-
-    assetGrid.classList.remove(
-      "asset-grid-active"
-    );
-
-
-    if (startMessage) {
-      startMessage.style.display = "block";
-    }
-
-
-    if (noResults) {
-      noResults.style.display = "none";
-    }
-
-
-    clearButton.style.display = "none";
-
-
-    resultsCount.textContent =
-      cards.length +
-      (
-        cards.length === 1
-          ? " asset"
-          : " assets"
-      );
-
-
-    /*
-    =====================================================
-    SEARCH FUNCTION
-    =====================================================
-    */
-
-    function performSearch() {
-
-      var query =
-        searchInput.value
-          .toLowerCase()
-          .trim();
-
-
-      var matchCount = 0;
-
-
-      /*
-      ===================================================
-      EMPTY SEARCH
-      ===================================================
-      */
-
-      if (query === "") {
+    function initializeAssetFinder() {
 
         /*
-         * Hide asset grid
+         * Prevent Salesforce from initializing
+         * the same finder more than once.
          */
+        if (initialized) {
+            return;
+        }
 
+        var searchInput =
+            document.getElementById("assetSearchInput");
+
+        var clearButton =
+            document.getElementById("assetClearButton");
+
+        var resultsCount =
+            document.getElementById("assetResultsCount");
+
+        var assetGrid =
+            document.getElementById("assetGrid");
+
+        var startMessage =
+            document.getElementById("assetSearchStart");
+
+        var noResults =
+            document.getElementById("assetNoResults");
+
+
+        /*
+         * If Salesforce hasn't rendered the
+         * component yet, stop for now.
+         */
+        if (
+            !searchInput ||
+            !clearButton ||
+            !resultsCount ||
+            !assetGrid
+        ) {
+            return;
+        }
+
+
+        initialized = true;
+
+
+        /*
+         * Get all cards.
+         */
+        var cards =
+            assetGrid.querySelectorAll(".asset-card");
+
+
+        /*
+         * Initial state.
+         */
         assetGrid.classList.remove(
-          "asset-grid-active"
+            "asset-grid-active"
         );
 
 
-        /*
-         * Show start message
-         */
-
         if (startMessage) {
-          startMessage.style.display = "block";
+            startMessage.style.display = "block";
         }
 
-
-        /*
-         * Hide no-results message
-         */
 
         if (noResults) {
-          noResults.style.display = "none";
+            noResults.style.display = "none";
         }
 
-
-        /*
-         * Hide clear button
-         */
 
         clearButton.style.display = "none";
 
 
-        /*
-         * Remove matching classes
-         */
-
-        for (
-          var i = 0;
-          i < cards.length;
-          i++
-        ) {
-
-          cards[i].classList.remove(
-            "asset-search-match"
-          );
-
-        }
-
-
-        /*
-         * Reset count
-         */
-
         resultsCount.textContent =
-          cards.length +
-          (
-            cards.length === 1
-              ? " asset"
-              : " assets"
-          );
-
-
-        return 0;
-      }
-
-
-      /*
-      ===================================================
-      SEARCH IS ACTIVE
-      ===================================================
-      */
-
-      assetGrid.classList.add(
-        "asset-grid-active"
-      );
-
-
-      /*
-       * Hide starting message
-       */
-
-      if (startMessage) {
-        startMessage.style.display = "none";
-      }
-
-
-      /*
-       * Show clear button
-       */
-
-      clearButton.style.display = "block";
-
-
-      /*
-      ===================================================
-      SEARCH EACH ASSET
-      ===================================================
-      */
-
-      for (
-        var i = 0;
-        i < cards.length;
-        i++
-      ) {
-
-        var card =
-          cards[i];
+            cards.length +
+            (
+                cards.length === 1
+                    ? " asset"
+                    : " assets"
+            );
 
 
         /*
-         * Get data attributes
+         ============================================
+         SEARCH
+         ============================================
          */
+        function performSearch() {
 
-        var assetName =
-          card.getAttribute(
-            "data-asset-name"
-          ) || "";
-
-
-        var assetDate =
-          card.getAttribute(
-            "data-asset-date"
-          ) || "";
+            var query =
+                searchInput.value
+                    .toLowerCase()
+                    .trim();
 
 
-        var assetType =
-          card.getAttribute(
-            "data-asset-type"
-          ) || "";
+            var matchCount = 0;
 
 
-        /*
-         * Get visible card text
-         */
+            /*
+             * No search.
+             */
+            if (query === "") {
 
-        var cardText =
-          card.textContent || "";
-
-
-        /*
-         * Combine searchable values
-         */
-
-        var searchableText = (
-
-          assetName +
-          " " +
-          assetDate +
-          " " +
-          assetType +
-          " " +
-          cardText
-
-        ).toLowerCase();
+                assetGrid.classList.remove(
+                    "asset-grid-active"
+                );
 
 
-        /*
-         * Check for match
-         */
-
-        var matched =
-          searchableText.indexOf(query) !== -1;
+                if (startMessage) {
+                    startMessage.style.display = "block";
+                }
 
 
-        /*
-         * Matching card
-         */
+                if (noResults) {
+                    noResults.style.display = "none";
+                }
 
-        if (matched) {
 
-          card.classList.add(
-            "asset-search-match"
-          );
+                clearButton.style.display = "none";
 
-          matchCount++;
+
+                for (
+                    var i = 0;
+                    i < cards.length;
+                    i++
+                ) {
+
+                    cards[i].classList.remove(
+                        "asset-search-match"
+                    );
+
+                }
+
+
+                resultsCount.textContent =
+                    cards.length +
+                    (
+                        cards.length === 1
+                            ? " asset"
+                            : " assets"
+                    );
+
+
+                return;
+            }
+
+
+            /*
+             * Search is active.
+             */
+            assetGrid.classList.add(
+                "asset-grid-active"
+            );
+
+
+            if (startMessage) {
+                startMessage.style.display = "none";
+            }
+
+
+            clearButton.style.display = "block";
+
+
+            /*
+             * Check every asset.
+             */
+            for (
+                var i = 0;
+                i < cards.length;
+                i++
+            ) {
+
+                var card = cards[i];
+
+
+                var assetName =
+                    card.getAttribute(
+                        "data-asset-name"
+                    ) || "";
+
+
+                var assetDate =
+                    card.getAttribute(
+                        "data-asset-date"
+                    ) || "";
+
+
+                var assetType =
+                    card.getAttribute(
+                        "data-asset-type"
+                    ) || "";
+
+
+                var cardText =
+                    card.textContent || "";
+
+
+                /*
+                 * Everything searchable.
+                 */
+                var searchableText = (
+                    assetName +
+                    " " +
+                    assetDate +
+                    " " +
+                    assetType +
+                    " " +
+                    cardText
+                ).toLowerCase();
+
+
+                /*
+                 * Find match.
+                 */
+                var matched =
+                    searchableText.indexOf(query) !== -1;
+
+
+                if (matched) {
+
+                    card.classList.add(
+                        "asset-search-match"
+                    );
+
+                    matchCount++;
+
+                } else {
+
+                    card.classList.remove(
+                        "asset-search-match"
+                    );
+
+                }
+
+            }
+
+
+            /*
+             * Result count.
+             */
+            resultsCount.textContent =
+                matchCount +
+                (
+                    matchCount === 1
+                        ? " matching asset"
+                        : " matching assets"
+                );
+
+
+            /*
+             * No results.
+             */
+            if (noResults) {
+
+                noResults.style.display =
+                    matchCount === 0
+                        ? "block"
+                        : "none";
+
+            }
 
         }
 
 
         /*
-         * Non-matching card
+         ============================================
+         TYPING
+         ============================================
          */
-
-        else {
-
-          card.classList.remove(
-            "asset-search-match"
-          );
-
-        }
-
-      }
-
-
-      /*
-      ===================================================
-      UPDATE RESULT COUNT
-      ===================================================
-      */
-
-      resultsCount.textContent =
-        matchCount +
-        (
-          matchCount === 1
-            ? " matching asset"
-            : " matching assets"
+        searchInput.addEventListener(
+            "input",
+            performSearch
         );
 
 
-      /*
-      ===================================================
-      NO RESULTS
-      ===================================================
-      */
+        /*
+         ============================================
+         ENTER
+         ============================================
+         */
+        searchInput.addEventListener(
+            "keydown",
+            function (event) {
 
-      if (noResults) {
+                if (event.key === "Enter") {
 
-        if (matchCount === 0) {
+                    event.preventDefault();
 
-          noResults.style.display =
-            "block";
+                    performSearch();
 
-        }
+                }
 
-        else {
-
-          noResults.style.display =
-            "none";
-
-        }
-
-      }
+            }
+        );
 
 
-      /*
-      Return number of matches
-      */
+        /*
+         ============================================
+         ESCAPE
+         ============================================
+         */
+        searchInput.addEventListener(
+            "keydown",
+            function (event) {
 
-      return matchCount;
+                if (event.key === "Escape") {
+
+                    event.preventDefault();
+
+                    searchInput.value = "";
+
+                    performSearch();
+
+                    searchInput.focus();
+
+                }
+
+            }
+        );
+
+
+        /*
+         ============================================
+         CLEAR
+         ============================================
+         */
+        clearButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+
+                searchInput.value = "";
+
+                performSearch();
+
+                searchInput.focus();
+
+            }
+        );
 
     }
 
 
     /*
-    =====================================================
-    LIVE SEARCH
-    =====================================================
-    */
+     ================================================
+     INITIAL LOAD
+     ================================================
+     */
 
-    searchInput.addEventListener(
-      "input",
-      function () {
+    if (
+        document.readyState === "loading"
+    ) {
 
-        performSearch();
+        document.addEventListener(
+            "DOMContentLoaded",
+            initializeAssetFinder
+        );
 
-      }
+    } else {
+
+        initializeAssetFinder();
+
+    }
+
+
+    /*
+     ================================================
+     WINDOW LOAD
+     ================================================
+     */
+
+    window.addEventListener(
+        "load",
+        initializeAssetFinder
     );
 
 
     /*
-    =====================================================
-    ENTER KEY
-    =====================================================
-    */
+     ================================================
+     SALESFORCE ASYNC FALLBACK
+     ================================================
+     *
+     * Experience Cloud can render components
+     * after DOMContentLoaded.
+     *
+     * Try again after a short delay.
+     */
 
-    searchInput.addEventListener(
-      "keydown",
-      function (event) {
-
-        if (event.key === "Enter") {
-
-          /*
-           * Prevent Enter from submitting
-           * another Salesforce form.
-           */
-
-          event.preventDefault();
-
-          event.stopPropagation();
-
-
-          /*
-           * Perform the search.
-           */
-
-          var matchCount =
-            performSearch();
-
-
-          /*
-           * Find the first matching card.
-           */
-
-          if (matchCount > 0) {
-
-            var firstMatch =
-              assetGrid.querySelector(
-                ".asset-card.asset-search-match"
-              );
-
-
-            /*
-             * Scroll the first matching
-             * asset into view.
-             */
-
-            if (firstMatch) {
-
-              firstMatch.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-              });
-
-
-              /*
-               * Optional visual focus
-               */
-
-              firstMatch.setAttribute(
-                "tabindex",
-                "-1"
-              );
-
-              firstMatch.focus({
-                preventScroll: true
-              });
-
-            }
-
-          }
-
-        }
-
-      }
+    setTimeout(
+        initializeAssetFinder,
+        1000
     );
 
-
-    /*
-    =====================================================
-    CLEAR BUTTON
-    =====================================================
-    */
-
-    clearButton.addEventListener(
-      "click",
-      function (event) {
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-
-        /*
-         * Clear input
-         */
-
-        searchInput.value = "";
-
-
-        /*
-         * Reset search
-         */
-
-        performSearch();
-
-
-        /*
-         * Return focus to search
-         */
-
-        searchInput.focus();
-
-      }
+    setTimeout(
+        initializeAssetFinder,
+        2500
     );
 
-
-    /*
-    =====================================================
-    ESCAPE KEY
-    =====================================================
-    */
-
-    searchInput.addEventListener(
-      "keydown",
-      function (event) {
-
-        if (event.key === "Escape") {
-
-          event.preventDefault();
-
-          searchInput.value = "";
-
-          performSearch();
-
-          searchInput.focus();
-
-        }
-
-      }
+    setTimeout(
+        initializeAssetFinder,
+        5000
     );
-
-  }
-
-
-  /*
-  =====================================================
-  INITIAL PAGE LOAD
-  =====================================================
-  */
-
-  if (
-    document.readyState === "loading"
-  ) {
-
-    document.addEventListener(
-      "DOMContentLoaded",
-      initializeAssetFinder
-    );
-
-  }
-
-  else {
-
-    initializeAssetFinder();
-
-  }
-
-
-  /*
-  =====================================================
-  SALESFORCE / ASYNC LOAD SUPPORT
-  =====================================================
-  */
-
-  window.addEventListener(
-    "load",
-    initializeAssetFinder
-  );
 
 
 })();
