@@ -1,412 +1,637 @@
 (function () {
-    "use strict";
 
-    var initialized = false;
+  "use strict";
 
-    function initializeAssetFinder() {
-
-        /*
-         * Prevent Salesforce from initializing
-         * the same finder more than once.
-         */
-        if (initialized) {
-            return;
-        }
-
-        var searchInput =
-            document.getElementById("assetSearchInput");
-
-        var clearButton =
-            document.getElementById("assetClearButton");
-
-        var resultsCount =
-            document.getElementById("assetResultsCount");
-
-        var assetGrid =
-            document.getElementById("assetGrid");
-
-        var startMessage =
-            document.getElementById("assetSearchStart");
-
-        var noResults =
-            document.getElementById("assetNoResults");
+  var initialized = false;
 
 
-        /*
-         * If Salesforce hasn't rendered the
-         * component yet, stop for now.
-         */
-        if (
-            !searchInput ||
-            !clearButton ||
-            !resultsCount ||
-            !assetGrid
-        ) {
-            return;
-        }
+  /*
+  =====================================================
+  INITIALIZE ASSET FINDER
+  =====================================================
+  */
+
+  function initializeAssetFinder() {
+
+    var searchInput =
+      document.getElementById("assetSearchInput");
+
+    var clearButton =
+      document.getElementById("assetClearButton");
+
+    var resultsCount =
+      document.getElementById("assetResultsCount");
+
+    var assetGrid =
+      document.getElementById("assetGrid");
+
+    var startMessage =
+      document.getElementById("assetSearchStart");
+
+    var noResults =
+      document.getElementById("assetNoResults");
 
 
-        initialized = true;
+    /*
+    -----------------------------------------------------
+    STOP IF ELEMENTS DON'T EXIST YET
+    -----------------------------------------------------
+    */
+
+    if (
+      !searchInput ||
+      !clearButton ||
+      !resultsCount ||
+      !assetGrid
+    ) {
+      return;
+    }
 
 
-        /*
-         * Get all cards.
-         */
-        var cards =
-            assetGrid.querySelectorAll(".asset-card");
+    /*
+    -----------------------------------------------------
+    PREVENT DUPLICATE EVENT HANDLERS
+    -----------------------------------------------------
+    */
+
+    if (initialized) {
+      return;
+    }
+
+    initialized = true;
 
 
-        /*
-         * Initial state.
-         */
+    /*
+    =====================================================
+    GET CURRENT ASSET CARDS
+    =====================================================
+    */
+
+    function getCards() {
+
+      return assetGrid.querySelectorAll(
+        ".asset-card"
+      );
+
+    }
+
+
+    /*
+    =====================================================
+    UPDATE TOTAL COUNT
+    =====================================================
+    */
+
+    function updateCount() {
+
+      var cards = getCards();
+
+      var total = cards.length;
+
+      resultsCount.textContent =
+        total +
+        (
+          total === 1
+            ? " asset"
+            : " assets"
+        );
+
+    }
+
+
+    /*
+    =====================================================
+    PERFORM SEARCH
+    =====================================================
+    */
+
+    function performSearch() {
+
+      /*
+       * IMPORTANT:
+       * Get cards every time.
+       * Salesforce can render more cards later.
+       */
+
+      var cards = getCards();
+
+      var query =
+        searchInput.value
+          .toLowerCase()
+          .trim();
+
+      var matchCount = 0;
+
+
+      /*
+      ---------------------------------------------------
+      EMPTY SEARCH
+      ---------------------------------------------------
+      */
+
+      if (query === "") {
+
         assetGrid.classList.remove(
-            "asset-grid-active"
+          "asset-grid-active"
         );
 
 
         if (startMessage) {
-            startMessage.style.display = "block";
+
+          startMessage.style.display =
+            "block";
+
         }
 
 
         if (noResults) {
-            noResults.style.display = "none";
-        }
 
-
-        clearButton.style.display = "none";
-
-
-        resultsCount.textContent =
-            cards.length +
-            (
-                cards.length === 1
-                    ? " asset"
-                    : " assets"
-            );
-
-
-        /*
-         ============================================
-         SEARCH
-         ============================================
-         */
-        function performSearch() {
-
-            var query =
-                searchInput.value
-                    .toLowerCase()
-                    .trim();
-
-
-            var matchCount = 0;
-
-
-            /*
-             * No search.
-             */
-            if (query === "") {
-
-                assetGrid.classList.remove(
-                    "asset-grid-active"
-                );
-
-
-                if (startMessage) {
-                    startMessage.style.display = "block";
-                }
-
-
-                if (noResults) {
-                    noResults.style.display = "none";
-                }
-
-
-                clearButton.style.display = "none";
-
-
-                for (
-                    var i = 0;
-                    i < cards.length;
-                    i++
-                ) {
-
-                    cards[i].classList.remove(
-                        "asset-search-match"
-                    );
-
-                }
-
-
-                resultsCount.textContent =
-                    cards.length +
-                    (
-                        cards.length === 1
-                            ? " asset"
-                            : " assets"
-                    );
-
-
-                return;
-            }
-
-
-            /*
-             * Search is active.
-             */
-            assetGrid.classList.add(
-                "asset-grid-active"
-            );
-
-
-            if (startMessage) {
-                startMessage.style.display = "none";
-            }
-
-
-            clearButton.style.display = "block";
-
-
-            /*
-             * Check every asset.
-             */
-            for (
-                var i = 0;
-                i < cards.length;
-                i++
-            ) {
-
-                var card = cards[i];
-
-
-                var assetName =
-                    card.getAttribute(
-                        "data-asset-name"
-                    ) || "";
-
-
-                var assetDate =
-                    card.getAttribute(
-                        "data-asset-date"
-                    ) || "";
-
-
-                var assetType =
-                    card.getAttribute(
-                        "data-asset-type"
-                    ) || "";
-
-
-                var cardText =
-                    card.textContent || "";
-
-
-                /*
-                 * Everything searchable.
-                 */
-                var searchableText = (
-                    assetName +
-                    " " +
-                    assetDate +
-                    " " +
-                    assetType +
-                    " " +
-                    cardText
-                ).toLowerCase();
-
-
-                /*
-                 * Find match.
-                 */
-                var matched =
-                    searchableText.indexOf(query) !== -1;
-
-
-                if (matched) {
-
-                    card.classList.add(
-                        "asset-search-match"
-                    );
-
-                    matchCount++;
-
-                } else {
-
-                    card.classList.remove(
-                        "asset-search-match"
-                    );
-
-                }
-
-            }
-
-
-            /*
-             * Result count.
-             */
-            resultsCount.textContent =
-                matchCount +
-                (
-                    matchCount === 1
-                        ? " matching asset"
-                        : " matching assets"
-                );
-
-
-            /*
-             * No results.
-             */
-            if (noResults) {
-
-                noResults.style.display =
-                    matchCount === 0
-                        ? "block"
-                        : "none";
-
-            }
+          noResults.style.display =
+            "none";
 
         }
 
 
-        /*
-         ============================================
-         TYPING
-         ============================================
-         */
-        searchInput.addEventListener(
-            "input",
-            performSearch
-        );
+        clearButton.style.display =
+          "none";
+
+
+        for (
+          var i = 0;
+          i < cards.length;
+          i++
+        ) {
+
+          cards[i].classList.remove(
+            "asset-search-match"
+          );
+
+        }
+
+
+        updateCount();
+
+        return 0;
+
+      }
+
+
+      /*
+      ---------------------------------------------------
+      SHOW GRID
+      ---------------------------------------------------
+      */
+
+      assetGrid.classList.add(
+        "asset-grid-active"
+      );
+
+
+      /*
+      ---------------------------------------------------
+      HIDE START MESSAGE
+      ---------------------------------------------------
+      */
+
+      if (startMessage) {
+
+        startMessage.style.display =
+          "none";
+
+      }
+
+
+      /*
+      ---------------------------------------------------
+      SHOW CLEAR BUTTON
+      ---------------------------------------------------
+      */
+
+      clearButton.style.display =
+        "block";
+
+
+      /*
+      ---------------------------------------------------
+      SEARCH CARDS
+      ---------------------------------------------------
+      */
+
+      for (
+        var i = 0;
+        i < cards.length;
+        i++
+      ) {
+
+        var card = cards[i];
 
 
         /*
-         ============================================
-         ENTER
-         ============================================
+         * Get extra searchable information
          */
-        searchInput.addEventListener(
-            "keydown",
-            function (event) {
 
-                if (event.key === "Enter") {
+        var assetName =
+          card.getAttribute(
+            "data-asset-name"
+          ) || "";
 
-                    event.preventDefault();
 
-                    performSearch();
+        var assetDate =
+          card.getAttribute(
+            "data-asset-date"
+          ) || "";
 
-                }
 
-            }
-        );
+        var assetType =
+          card.getAttribute(
+            "data-asset-type"
+          ) || "";
 
 
         /*
-         ============================================
-         ESCAPE
-         ============================================
+         * Get all visible text
          */
-        searchInput.addEventListener(
-            "keydown",
-            function (event) {
 
-                if (event.key === "Escape") {
-
-                    event.preventDefault();
-
-                    searchInput.value = "";
-
-                    performSearch();
-
-                    searchInput.focus();
-
-                }
-
-            }
-        );
+        var cardText =
+          card.textContent || "";
 
 
         /*
-         ============================================
-         CLEAR
-         ============================================
+         * Build searchable string
          */
-        clearButton.addEventListener(
-            "click",
-            function (event) {
 
-                event.preventDefault();
+        var searchableText = (
 
-                searchInput.value = "";
+          assetName +
+          " " +
+          assetDate +
+          " " +
+          assetType +
+          " " +
+          cardText
 
-                performSearch();
+        ).toLowerCase();
 
-                searchInput.focus();
 
-            }
+        /*
+         * Check match
+         */
+
+        var matched =
+          searchableText.indexOf(
+            query
+          ) !== -1;
+
+
+        if (matched) {
+
+          card.classList.add(
+            "asset-search-match"
+          );
+
+          matchCount++;
+
+        }
+
+        else {
+
+          card.classList.remove(
+            "asset-search-match"
+          );
+
+        }
+
+      }
+
+
+      /*
+      ---------------------------------------------------
+      RESULT COUNT
+      ---------------------------------------------------
+      */
+
+      resultsCount.textContent =
+        matchCount +
+        (
+          matchCount === 1
+            ? " matching asset"
+            : " matching assets"
         );
+
+
+      /*
+      ---------------------------------------------------
+      NO RESULTS
+      ---------------------------------------------------
+      */
+
+      if (noResults) {
+
+        noResults.style.display =
+          matchCount === 0
+            ? "block"
+            : "none";
+
+      }
+
+
+      return matchCount;
 
     }
 
 
     /*
-     ================================================
-     INITIAL LOAD
-     ================================================
-     */
+    =====================================================
+    ENTER KEY + SCROLL
+    =====================================================
+    */
 
-    if (
-        document.readyState === "loading"
-    ) {
+    searchInput.addEventListener(
+      "keydown",
+      function (event) {
 
-        document.addEventListener(
-            "DOMContentLoaded",
-            initializeAssetFinder
-        );
+        /*
+         * Detect Enter
+         */
 
-    } else {
+        if (
+          event.key === "Enter" ||
+          event.keyCode === 13
+        ) {
 
-        initializeAssetFinder();
+          /*
+           * Stop Salesforce/form submission
+           */
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          /*
+           * Execute search
+           */
+
+          var matchCount =
+            performSearch();
+
+
+          /*
+           * If there are results,
+           * scroll to first result.
+           */
+
+          if (matchCount > 0) {
+
+            /*
+             * Wait briefly for the browser
+             * to display the matching cards.
+             */
+
+            setTimeout(
+              function () {
+
+                var firstMatch =
+                  assetGrid.querySelector(
+                    ".asset-card.asset-search-match"
+                  );
+
+
+                if (!firstMatch) {
+                  return;
+                }
+
+
+                /*
+                 * Scroll to the asset.
+                 *
+                 * "center" puts it roughly
+                 * in the middle of the screen.
+                 */
+
+                firstMatch.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center"
+                });
+
+
+                /*
+                 * Optional temporary highlight
+                 */
+
+                firstMatch.classList.add(
+                  "asset-search-highlight"
+                );
+
+
+                /*
+                 * Remove highlight after
+                 * 2 seconds.
+                 */
+
+                setTimeout(
+                  function () {
+
+                    firstMatch.classList.remove(
+                      "asset-search-highlight"
+                    );
+
+                  },
+                  2000
+                );
+
+              },
+              100
+            );
+
+          }
+
+        }
+
+      },
+      true
+    );
+
+
+    /*
+    =====================================================
+    LIVE SEARCH
+    =====================================================
+    */
+
+    searchInput.addEventListener(
+      "input",
+      function () {
+
+        performSearch();
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    CLEAR BUTTON
+    =====================================================
+    */
+
+    clearButton.addEventListener(
+      "click",
+      function (event) {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+
+        searchInput.value = "";
+
+
+        performSearch();
+
+
+        searchInput.focus();
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    ESCAPE KEY
+    =====================================================
+    */
+
+    searchInput.addEventListener(
+      "keydown",
+      function (event) {
+
+        if (
+          event.key === "Escape" ||
+          event.keyCode === 27
+        ) {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          searchInput.value = "";
+
+
+          performSearch();
+
+
+          searchInput.focus();
+
+        }
+
+      },
+      true
+    );
+
+
+    /*
+    =====================================================
+    INITIAL STATE
+    =====================================================
+    */
+
+    assetGrid.classList.remove(
+      "asset-grid-active"
+    );
+
+
+    if (startMessage) {
+
+      startMessage.style.display =
+        "block";
 
     }
 
 
-    /*
-     ================================================
-     WINDOW LOAD
-     ================================================
-     */
+    if (noResults) {
 
-    window.addEventListener(
-        "load",
-        initializeAssetFinder
+      noResults.style.display =
+        "none";
+
+    }
+
+
+    clearButton.style.display =
+      "none";
+
+
+    updateCount();
+
+  }
+
+
+  /*
+  =====================================================
+  INITIALIZE
+  =====================================================
+  */
+
+  function tryInitialize() {
+
+    initializeAssetFinder();
+
+  }
+
+
+  if (
+    document.readyState === "loading"
+  ) {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      tryInitialize
     );
 
+  } else {
 
-    /*
-     ================================================
-     SALESFORCE ASYNC FALLBACK
-     ================================================
-     *
-     * Experience Cloud can render components
-     * after DOMContentLoaded.
-     *
-     * Try again after a short delay.
-     */
+    tryInitialize();
 
-    setTimeout(
-        initializeAssetFinder,
-        1000
-    );
+  }
 
-    setTimeout(
-        initializeAssetFinder,
-        2500
-    );
 
-    setTimeout(
-        initializeAssetFinder,
-        5000
-    );
+  /*
+  =====================================================
+  SALESFORCE LOAD SUPPORT
+  =====================================================
+  */
+
+  window.addEventListener(
+    "load",
+    tryInitialize
+  );
+
+
+  /*
+  Salesforce may render components
+  asynchronously.
+  */
+
+  setTimeout(
+    tryInitialize,
+    500
+  );
+
+  setTimeout(
+    tryInitialize,
+    1500
+  );
+
+  setTimeout(
+    tryInitialize,
+    3000
+  );
+
+  setTimeout(
+    tryInitialize,
+    5000
+  );
 
 
 })();
